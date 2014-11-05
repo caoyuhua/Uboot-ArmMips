@@ -38,8 +38,8 @@
 
 
 .globl _start
-_start:	b	start_code
-	ldr	pc, _undefined_instruction
+_start:	b	start_code/*uboot的主入口，跳转到后面定义的start_code函数*/
+	ldr	pc, _undefined_instruction/*中断向量表，将各中断函数地址复制给pc寄存器并立即执行*/
 	ldr	pc, _software_interrupt
 	ldr	pc, _prefetch_abort
 	ldr	pc, _data_abort
@@ -73,7 +73,7 @@ _fiq:			.word fiq
 
 .globl _TEXT_BASE
 _TEXT_BASE:
-	.word	CONFIG_SYS_TEXT_BASE
+	.word	CONFIG_SYS_TEXT_BASE/*定义在/include/configs/smdk2416.h中，表示代码在内存中的起始地址 非常重要*/
 
 /*
  * These are defined in the board-specific linker script.
@@ -81,11 +81,11 @@ _TEXT_BASE:
  * relative position in the executable instead of leaving
  * them null.
  */
-.globl _bss_start_ofs
+.globl _bss_start_ofs/*内存中堆区开始到_start的偏移*/
 _bss_start_ofs:
 	.word __bss_start - _start
 
-.globl _bss_end_ofs
+.globl _bss_end_ofs/*内存中堆区结尾到_start的偏移*/
 _bss_end_ofs:
 	.word __bss_end__ - _start
 
@@ -114,11 +114,11 @@ IRQ_STACK_START_IN:
  * the actual start code
  */
 
-start_code:
+start_code:/*内核运行环境:寄存器r0=0 r1=机器码 r2=bootargs在内存的起始地址;cpu设置为SVC32管理员模式，关闭中断和看门狗;必须关闭mmu和数据缓存dcache 指令缓存icache随意*/
 	/*
 	 * set the cpu to SVC32 mode
 	 */
-	mrs	r0, cpsr
+	mrs	r0, cpsr/*设置cpu模式为SVC32*/
 	bic	r0, r0, #0x1f
 	orr	r0, r0, #0xd3
 	msr	cpsr, r0
@@ -151,7 +151,7 @@ copyex:
 #  define CLKDIVN	0x4C000014	/* clock divisor register */
 # endif
 
-	ldr	r0, =pWTCON
+	ldr	r0, =pWTCON/*关闭看门狗*/
 	mov	r1, #0x0
 	str	r1, [r0]
 
@@ -159,7 +159,7 @@ copyex:
 	 * mask all IRQs by setting all bits in the INTMR - default
 	 */
 	mov	r1, #0xffffffff
-	ldr	r0, =INTMSK
+	ldr	r0, =INTMSK/*关闭所有中断*/
 	str	r1, [r0]
 # if defined(CONFIG_S3C2410)
 	ldr	r1, =0x3ff
@@ -169,7 +169,7 @@ copyex:
 
 	/* FCLK:HCLK:PCLK = 1:2:4 */
 	/* default FCLK is 120 MHz ! */
-	ldr	r0, =CLKDIVN
+	ldr	r0, =CLKDIVN/*设置时钟分频*/
 	mov	r1, #3
 	str	r1, [r0]
 #endif	/* CONFIG_S3C24X0 */
@@ -179,15 +179,15 @@ copyex:
 	 * not when booting from ram!
 	 */
 #ifndef CONFIG_SKIP_LOWLEVEL_INIT
-	bl	cpu_init_crit
+	bl	cpu_init_crit/*初始化DDR内存并设置内存时序，初始化norflash可选(不从norflash启动)*/
 #endif
 
 /* Set stackpointer in internal RAM to call board_init_f */
 call_board_init_f:
-	ldr	sp, =(CONFIG_SYS_INIT_SP_ADDR)
+	ldr	sp, =(CONFIG_SYS_INIT_SP_ADDR)/*设置栈顶地址，即赋值给sp寄存器*/
 	bic	sp, sp, #7 /* 8-byte alignment for ABI compliance */
 	ldr	r0,=0x00000000
-	bl	board_init_f
+	bl	board_init_f/*此函数的末尾处调用relocate_code汇编函数，重定向代码*/
 
 /*------------------------------------------------------------------------------*/
 
@@ -206,7 +206,7 @@ relocate_code:
 
 	/* Set up the stack						    */
 stack_setup:
-	mov	sp, r4
+	mov	sp, r4/*设置栈顶地址*/
 
 	adr	r0, _start
 	cmp	r0, r6
@@ -215,7 +215,7 @@ stack_setup:
 	ldr	r3, _bss_start_ofs
 	add	r2, r0, r3		/* r2 <- source end address	    */
 
-copy_loop:
+copy_loop:/*从norflash中读取代码到片外内存中:此处未添加nandflash启动的支持，否则如果判断是从nandflash启动应执行nand_boot()*/
 	ldmia	r0!, {r9-r10}		/* copy from source address [r0]    */
 	stmia	r1!, {r9-r10}		/* copy to   target address [r1]    */
 	cmp	r0, r2			/* until source end address [r2]    */
