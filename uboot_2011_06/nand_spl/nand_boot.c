@@ -222,7 +222,7 @@ static int nand_load(struct mtd_info *mtd, unsigned int offs,
  * configured and available since this code loads the main U-Boot image
  * from NAND into SDRAM and starts it from there.
  */
-void nand_boot(void)
+void nand_boot(void)//从nandflash启动的代码，功能类似copy_loop：arch/arm/cpu/armv7/s5pc1xx/nand_cp.c/board_init_f_nand与此函数可二选一
 {
 	struct nand_chip nand_chip;
 	nand_info_t nand_info;

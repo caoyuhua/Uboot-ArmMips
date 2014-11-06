@@ -221,18 +221,18 @@ call_board_init_f:
 
 	ldr	r1, [r0, #INF_REG3_OFFSET]
 	cmp	r1, #BOOT_NAND		/* 0x0 => boot device is nand */
-	beq	nand_boot_210
+	beq	nand_boot_210//检测看是否从nandflash启动
 	cmp     r1, #BOOT_MMCSD
-	beq     mmcsd_boot_210
+	beq     mmcsd_boot_210//检测看是否从SD卡启动
 	
 nand_boot_210:
-	bl     board_init_f_nand
+	bl     board_init_f_nand//从nandflash启动，将nandflash中的uboot拷贝到片外内存并跳到片外内存处运行。
 
 mmcsd_boot_210:
 	bl     board_init_f
 board_init_in_ram:
 #endif
-	bl	board_init_f
+	bl	board_init_f//若既不从nandflash启动也不从SD卡启动，则直接跳转到c函数board_init_f-->relocate_code-->copy_loop（norflash启动函数）-->因单板无norflash且norflash在low_level_init.s中也未初始化，故启动失败。
 /*------------------------------------------------------------------------------*/
 
 /*

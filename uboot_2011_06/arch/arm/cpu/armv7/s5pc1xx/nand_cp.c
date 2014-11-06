@@ -105,8 +105,42 @@ static int nandll_read_blocks (ulong dst_addr, ulong size, int large_block)
 
         return 0;
 }
+int copy_uboot_to_ram_nand (void)//nandflash在low_level_init.s或board_init_f中已被初始化，所以此处无需初始化。
+{
+	int large_block = 0;
+	int i;
+	vu_char id;
+
+	NAND_CONTROL_ENABLE();
+        NAND_ENABLE_CE();
+        NFCMD_REG = NAND_CMD_READID;
+        NFADDR_REG =  0x00;
+
+	/* wait for a while */
+        for (i=0; i<200; i++);
+	id = NFDATA8_REG;
+	id = NFDATA8_REG;
+
+	if (id > 0x80)
+		large_block = 1;
+
+	/* read NAND Block.
+	 * 128KB ->240KB because of U-Boot size increase. by scsuh
+	 * So, read 0x3c000 bytes not 0x20000(128KB).
+	 */
+	return nandll_read_blocks(CONFIG_SYS_TEXT_BASE, COPY_BL2_SIZE, large_block);
+}
 
 
+void board_init_f_nand(unsigned long bootflag)//从nandflash启动：called by start.s，功能类似于start.s中的copy_loop
+{///nand_spl/nand_boot.c/nand_boot()函数与此函数有同样功能，可替换之
+        __attribute__((noreturn)) void (*uboot)(void);
+        copy_uboot_to_ram_nand();
 
+        /* Jump to U-Boot image */
+        uboot = (void *)CONFIG_SYS_TEXT_BASE;
+	(*uboot)();
+        /* Never returns Here */
+}
 
 #endif
