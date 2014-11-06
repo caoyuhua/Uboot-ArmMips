@@ -120,8 +120,8 @@ static int s3c2410_nand_correct_data(struct mtd_info *mtd, u_char *dat,
 	return -1;
 }
 #endif
-
-int board_nand_init(struct nand_chip *nand)
+//单板更换nandflash芯片后真正需要更改的地方
+int board_nand_init(struct nand_chip *nand)//-->为struct nand_chip结构体各函数指针赋值，nand_read nand_write在nand_base.c中借用该结构体中IO_ADDR_R和IO_ADDR_W实现。
 {
 	u_int32_t cfg;
 	u_int8_t tacls, twrph0, twrph1;

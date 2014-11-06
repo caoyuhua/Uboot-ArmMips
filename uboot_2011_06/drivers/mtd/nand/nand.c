@@ -40,7 +40,7 @@ static const char default_nand_name[] = "nand";
 static __attribute__((unused)) char dev_name[CONFIG_SYS_MAX_NAND_DEVICE][8];
 
 static void nand_init_chip(struct mtd_info *mtd, struct nand_chip *nand,
-			   ulong base_addr)
+			   ulong base_addr)i
 {
 	int maxchips = CONFIG_SYS_NAND_MAX_CHIPS;
 	static int __attribute__((unused)) i = 0;
@@ -50,8 +50,8 @@ static void nand_init_chip(struct mtd_info *mtd, struct nand_chip *nand,
 	mtd->priv = nand;
 
 	nand->IO_ADDR_R = nand->IO_ADDR_W = (void  __iomem *)base_addr;
-	if (board_nand_init(nand) == 0) {
-		if (nand_scan(mtd, maxchips) == 0) {
+	if (board_nand_init(nand) == 0) {//boad_nand_init定义在drivers/mtd/nand/s3c2410_nand.c中，是单板更换flash芯片后真正需要添加更改的地方。
+		if (nand_scan(mtd, maxchips) == 0) {//nand_scan(),定义在drivers/mtd/nand/nand_base.c
 			if (!mtd->name)
 				mtd->name = (char *)default_nand_name;
 #ifdef CONFIG_NEEDS_MANUAL_RELOC
@@ -80,12 +80,12 @@ static void nand_init_chip(struct mtd_info *mtd, struct nand_chip *nand,
 
 }
 
-void nand_init(void)
+void nand_init(void)//called by board.c/board_init_r
 {
 	int i;
 	unsigned int size = 0;
 	for (i = 0; i < CONFIG_SYS_MAX_NAND_DEVICE; i++) {
-		nand_init_chip(&nand_info[i], &nand_chip[i], base_address[i]);
+		nand_init_chip(&nand_info[i], &nand_chip[i], base_address[i]);//调用nand_init_chip对nandflash芯片初始化
 		size += nand_info[i].size / 1024;
 		if (nand_curr_device == -1)
 			nand_curr_device = i;

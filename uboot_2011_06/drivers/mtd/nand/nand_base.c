@@ -2697,7 +2697,7 @@ static const struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
  *
  * The mtd->owner field must be set to the module of the caller.
  */
-int nand_scan_ident(struct mtd_info *mtd, int maxchips,
+int nand_scan_ident(struct mtd_info *mtd, int maxchips,//called by nand_scan()
 		    const struct nand_flash_dev *table)
 {
 	int i, busw, nand_maf_id, nand_dev_id;
@@ -2753,7 +2753,7 @@ int nand_scan_ident(struct mtd_info *mtd, int maxchips,
  * fills out all the uninitialized function pointers with the defaults
  * and scans for a bad block table if appropriate.
  */
-int nand_scan_tail(struct mtd_info *mtd)
+int nand_scan_tail(struct mtd_info *mtd)//called by nand_scan()
 {
 	int i;
 	struct nand_chip *chip = mtd->priv;
@@ -2946,7 +2946,7 @@ int nand_scan_tail(struct mtd_info *mtd)
 	mtd->point = NULL;
 	mtd->unpoint = NULL;
 	mtd->read = nand_read;
-	mtd->write = nand_write;
+	mtd->write = nand_write;//为struct mtd_info结构体的各函数指针赋值.
 	mtd->read_oob = nand_read_oob;
 	mtd->write_oob = nand_write_oob;
 	mtd->sync = nand_sync;
