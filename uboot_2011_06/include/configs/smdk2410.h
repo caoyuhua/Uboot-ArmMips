@@ -114,6 +114,7 @@
 #define CONFIG_RESET_TO_RETRY
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
+#define CONFIG_ETHADDR		10:40:5c:26:0a:5b//定义此宏后就无需再uboot中设置mac地址，setenv ethaddr xx:xx:xx:xx:xx:xx
 #define CONFIG_NETMASK		255.255.255.0
 #define CONFIG_IPADDR		10.0.0.110
 #define CONFIG_SERVERIP		10.0.0.1
