@@ -271,7 +271,7 @@ void input_value(u8 *str)
 		console_buffer[0] = '\0';
 	while(1)
 	{
-		if (readline ("==:") > 0)
+		if (readline_mips ("==:",1) > 0)
 		{
 			strcpy (str, console_buffer);
 			break;
