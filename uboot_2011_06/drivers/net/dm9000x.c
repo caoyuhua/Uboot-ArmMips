@@ -57,7 +57,7 @@ v1.2   03/18/2003       Weilun Huang <weilun_huang@davicom.com.tw>:
 
 TODO: external MII is not functional, only internal at the moment.
 */
-
+//dm9000x.c:you can modify DM9000_net_driver by modify this file
 #include <common.h>
 #include <command.h>
 #include <net.h>

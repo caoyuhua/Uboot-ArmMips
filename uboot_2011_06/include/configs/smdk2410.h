@@ -118,6 +118,13 @@
 #define CONFIG_IPADDR		10.0.0.110
 #define CONFIG_SERVERIP		10.0.0.1
 
+//CONFIG for net driver
+#define CONFIG_DRIVER_DM9000 1
+#define CONFIG_DM9000_BASE 0x10000004
+#define DM9000_IO CONFIG_DM9000_BASE
+#define DM9000_DATA (CONFIG_DM9000_BASE + 4)
+#define CONFIG_NET_MULTI    1
+
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	115200	/* speed to run kgdb serial port */
 /* what's this ? it's not used anywhere */

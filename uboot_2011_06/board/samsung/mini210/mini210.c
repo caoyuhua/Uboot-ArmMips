@@ -35,7 +35,7 @@
 #include <asm/arch/clk.h> 
 #include <asm/arch/clock.h> 
 /*Add by lk for DM9000 driver */
-
+//#include <drivers/net/dm9000x.h>
 /* ------------------------------------------------------------------------- */
 #define SMC9115_Tacs	(0x0)	// 0clk		address set-up
 #define SMC9115_Tcos	(0x4)	// 4clk		chip selection set-up
@@ -51,6 +51,7 @@
 #define SROM_BYTE_ENABLE(x)     (1<<((x*4)+3))
 
 /* ------------------------------------------------------------------------- */
+//uboot/drivers/net/dm9000x.h中已经包含这些宏定义
 #define DM9000_Tacs	(0x0)	// 0clk		address set-up
 #define DM9000_Tcos	(0x4)	// 4clk		chip selection set-up
 #define DM9000_Tacc	(0xE)	// 14clk	access cycle
@@ -112,7 +113,7 @@ static void smc9115_pre_init(void)
 
 }
 
-static void dm9000_pre_init(void)
+static void dm9000_pre_init(void)//called by board_init in this file
 {
 	unsigned int tmp;
 
@@ -159,7 +160,7 @@ int board_init(void)
 	//smc9115_pre_init();
         pwm_pre_init();
 
-#ifdef CONFIG_DRIVER_DM9000
+#ifdef CONFIG_DRIVER_DM9000//CONFIG_DRIVER_DM9000
 	dm9000_pre_init();
 #endif
 
@@ -188,6 +189,15 @@ void dram_init_banksize(void)
 //        gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
   //      gd->bd->bi_dram[1].size = get_ram_size((long *)PHYS_SDRAM_2, \
     //                                                    PHYS_SDRAM_2_SIZE);
+}
+
+int board_eth_init(bd_t *bis)
+{
+	int rc = 0;
+#ifdef CONFIG_DRIVER_DM9000
+	rc = dm9000_initialize(bis);
+#endif
+	return rc;
 }
 
 #ifdef BOARD_LATE_INIT

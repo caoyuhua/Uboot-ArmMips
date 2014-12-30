@@ -250,7 +250,7 @@ int eth_register(struct eth_device *dev)
 
 	return 0;
 }
-
+//eth_initialize():若定义CONFIG_NET_MULTI则使用该函数，否则使用下文定义的eth_initialize()。
 int eth_initialize(bd_t *bis)
 {
 	int eth_number = 0;
@@ -272,7 +272,7 @@ int eth_initialize(bd_t *bis)
 	 * If not, call a CPU-specific one
 	 */
 	if (board_eth_init != __def_eth_init) {
-		if (board_eth_init(bis) < 0)
+		if (board_eth_init(bis) < 0)//board_eth_init()-->本函数中会调用dm9000_initialize或cs8900_initialize
 			printf("Board Net Initialization Failed\n");
 	} else if (cpu_eth_init != __def_eth_init) {
 		if (cpu_eth_init(bis) < 0)
