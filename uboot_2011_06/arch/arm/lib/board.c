@@ -259,6 +259,112 @@ init_fnc_t *init_sequence[] = {
 	dram_init,		/* configure available RAM banks */
 	NULL,
 };
+
+void input_value(u8 *str)
+{
+	if (str)
+		strcpy(console_buffer, str);
+	else
+		console_buffer[0] = '\0';
+	while(1)
+	{
+		if (readline ("==:") > 0)
+		{
+			strcpy (str, console_buffer);
+			break;
+		}
+		else
+			break;
+	}
+}
+int tftp_config(int type, char *argv[])
+{
+	char *s;
+	char default_file[ARGV_LEN], file[ARGV_LEN], devip[ARGV_LEN], srvip[ARGV_LEN], default_ip[ARGV_LEN];
+
+	printf(" Please Input new ones /or Ctrl-C to discard\n");
+
+	memset(default_file, 0, ARGV_LEN);
+	memset(file, 0, ARGV_LEN);
+	memset(devip, 0, ARGV_LEN);
+	memset(srvip, 0, ARGV_LEN);
+	memset(default_ip, 0, ARGV_LEN);
+
+	printf("\tInput device IP ");
+	s = getenv("ipaddr");
+	memcpy(devip, s, strlen(s));
+	memcpy(default_ip, s, strlen(s));
+
+	printf("(%s) ", devip);
+	input_value(devip);
+	setenv("ipaddr", devip);
+
+	printf("\tInput server IP ");
+	s = getenv("serverip");
+	memcpy(srvip, s, strlen(s));
+	memset(default_ip, 0, ARGV_LEN);
+	memcpy(default_ip, s, strlen(s));
+
+	printf("(%s) ", srvip);
+	input_value(srvip);
+	setenv("serverip", srvip);
+
+//	int tmp=sizeof(srvip);
+//	srvip[tmp+1] = '\0';
+	strncpy(argv[3], srvip, ARGV_LEN);
+//	argv[3] = srvip;
+	
+    printf("..........type=%d\n",type);
+	if(type == 1) {
+		printf("\tInput Uboot filename ");
+		//argv[2] = "uboot.bin";
+		strncpy(argv[2], "uboot.bin",ARGV_LEN);
+	}
+	else if (type == 2) {
+		printf("\tInput Linux Kernel filename ");
+		//argv[2] = "zImage"; 
+		strncpy(argv[2], "zImage", ARGV_LEN);
+	}
+	else if (type == 3) {
+		printf("\tInput Rootfs filename ");
+		//argv[2] = "yaffsImg";
+		strncpy(argv[2], "yaffsImg", ARGV_LEN);
+	}
+
+	s = getenv("bootfile");
+	if (s != NULL) {
+		memcpy(file, s, strlen(s));
+		memcpy(default_file, s, strlen(s));
+	}
+	printf("(%s) ", file);
+	input_value(file);
+	if (file == NULL)
+		return 1;
+	copy_filename (argv[2], file, sizeof(file));
+	setenv("bootfile", file);
+
+	return 0;
+}
+void main_menu_usage(void)                                         
+{                                                    
+    	printf("\n\n");
+              
+	printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+	printf("^                                                                  ^\n");
+	printf("^  [1] Download the uboot      into Nand flash by TFTP             ^\n");
+	printf("^  [2] Download the kernel     into Nand flash by TFTP             ^\n");
+	printf("^  [3] Download the filesystem into Nand flash by TFTP             ^\n");
+	printf("^  [4] Boot the linux (YAFFS2)                                     ^\n");
+	printf("^  [5] Entr boot command line interface.                           ^\n");
+//	printf("^  [e] Erase entire chip !!  (Be Care)                             ^\n");
+//	printf("^  [?] Boot the linux (NFS)                                        ^\n");
+	printf("^  [q] Quit                                                        ^\n");
+	printf("^                                                                  ^\n");
+   	printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+	printf("\nEnter your selection: ");   	                                                                                                     
+}     
+
+
 void board_init_f_nand(ulong bootflag)
 {
 	while(1);
@@ -637,6 +743,137 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	}
 #endif
 
+
+	int timer1= CONFIG_BOOTDELAY;
+	unsigned char BootType='4';
+	int my_tmp=0;
+	char cmd_buf[200]={0};
+	int i =0;
+	char *argv[4];	
+	//argv[2] = &file_name_space[0];
+	//memset(file_name_space,0,ARGV_LEN);
+	
+	/*config bootdelay via environment parameter: bootdelay */
+	{
+		char * s;
+		s = getenv ("bootdelay");
+		timer1 = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
+	}
+    main_menu_usage(); 
+	while (timer1 > 0) {
+		--timer1;
+		//delay 100 * 10ms
+		for (i=0; i<100; ++i) {
+			if ((my_tmp = tstc()) != 0) {	
+				timer1 = 0; 
+				BootType = getc();
+				if ((BootType < '1' || BootType > '5') && (BootType != 'e') && (BootType != 'q'))
+					BootType = '4';
+				printf("\n\rYou choosed %c\n\n", BootType);
+				break;
+			}
+			udelay (10000);
+		}
+		printf ("\b\b\b%2d ", timer1);
+	}
+	
+	putc ('\n');
+
+switch(BootType)
+{
+	case '1':
+		printf("\n");
+		tftp_config(1,argv);
+		sprintf(cmd_buf,"tftpboot 0xc0008000 %s:%s",argv[3],argv[2]);
+/*
+		strcpy(cmd_buf, "tftpboot 0xc0008000 ");	
+		tmp_str = strlen("tftpboot 0xc0008000 ");
+		strcpy(&cmd_buf[tmp_str], argv[3]);	
+		tmp_str += strlen(argv[3]);
+		strcpy(&cmd_buf[tmp_str], ":");
+		strcpy(&cmd_buf[tmp_str+1], argv[2]);	
+*/		
+		printf("..........cmd_buf=%s\n",cmd_buf);
+		run_command(cmd_buf, 0);
+		printf("..........NetBootFileXferSize=%x\n",NetBootFileXferSize);
+		if(NetBootFileXferSize <= 0)
+			return;
+			
+		strcpy(cmd_buf, "nand erase  0 0x100000");
+		run_command(cmd_buf, 0);
+		
+		sprintf(cmd_buf,"nand write 0xc0008000 0 0x100000");
+		run_command(cmd_buf, 0);
+		do_reset();
+		break;
+	
+	case '2':
+		printf("\n");
+		tftp_config(2,argv);
+		sprintf(cmd_buf,"tftpboot 0xc0008000 %s:%s",argv[3],argv[2]);	
+		printf("..........cmd_buf=%s\n",cmd_buf);
+		run_command(cmd_buf, 0);
+		if(NetBootFileXferSize <= 0)
+			return;
+		
+		strcpy(cmd_buf, "nand erase  0xa00000 0x300000");
+		run_command(cmd_buf, 0);
+		
+		sprintf(cmd_buf,"nand write 0xc0008000 0xa00000 0x300000");
+		run_command(cmd_buf, 0);
+		do_reset();
+		break;
+
+	case '3':
+		printf("\n");
+		tftp_config(3,argv);
+		sprintf(cmd_buf,"tftpboot 0xc0008000 %s:%s",argv[3],argv[2]);	
+		printf("..........cmd_buf=%s\n",cmd_buf);
+		run_command(cmd_buf, 0);
+		if(NetBootFileXferSize <= 0)
+			return;
+		
+		strcpy(cmd_buf, "nand erase  0xd00000 0x6400000");/*erase 100M*/
+		run_command(cmd_buf, 0);
+		
+		sprintf(cmd_buf,"nand write.yaffs 0xc0008000 0xd00000 %x",NetBootFileXferSize);
+		run_command(cmd_buf, 0);
+		do_reset();
+		break;
+		
+	case '4':
+		printf("\n");
+		printf("Boot the linux (YAFFS2)\n");
+		strcpy(cmd_buf, "setenv bootargs root=/dev/mtdblock4 rootfstype=yaffs2 init=/init console=ttySAC0,115200");
+		run_command(cmd_buf, 0);
+		strcpy(cmd_buf, "setenv bootcmd nand read 0xc0008000 0xa00000 0x300000;bootm 0xc0008000; save");
+		run_command(cmd_buf, 0);
+		strcpy(cmd_buf, "nand read 0xc0008000 0xa00000 0x300000");
+		run_command(cmd_buf, 0);
+		strcpy(cmd_buf, "bootm 0xc0008000");
+		run_command(cmd_buf, 0);
+		break;
+
+	case '5':
+		printf("   \n%c: System Enter Boot Command Line Interface.\n",BootType);
+		printf ("\n%s\n", version_string);
+		/* main_loop() can return to retry autoboot, if so just run it again. */
+		//for (;;) {					
+		//	main_loop ();
+		//}
+
+	break;	
+
+	case 'q':
+	{							 
+		printf("\n");
+		return; 				 
+		break;					 
+	}	
+	default:
+		printf("err:please reset soc...\n");
+		break;	
+}
 	/* main_loop() can return to retry autoboot, if so just run it again. */
 	for (;;) {
 		main_loop();
