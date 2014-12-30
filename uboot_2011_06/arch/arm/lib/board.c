@@ -78,6 +78,9 @@ extern void rtl8019_get_enetaddr (uchar * addr);
 #include <i2c.h>
 #endif
 
+#define ARGV_LEN  128
+extern char        console_buffer[CFG_CBSIZE];		/* console I/O buffer	*/
+static char  file_name_space[ARGV_LEN];
 
 /************************************************************************
  * Coloured LED functionality
@@ -309,16 +312,16 @@ int tftp_config(int type, char *argv[])
 	input_value(srvip);
 	setenv("serverip", srvip);
 
-//	int tmp=sizeof(srvip);
-//	srvip[tmp+1] = '\0';
+	int tmp=sizeof(srvip);
+	srvip[tmp+1] = '\0';
 	strncpy(argv[3], srvip, ARGV_LEN);
-//	argv[3] = srvip;
+	argv[3] = srvip;//直接将一字符串赋值给argv[3]，故在board_init_r中无需对指针argv[3]初始化
 	
     printf("..........type=%d\n",type);
 	if(type == 1) {
 		printf("\tInput Uboot filename ");
 		//argv[2] = "uboot.bin";
-		strncpy(argv[2], "uboot.bin",ARGV_LEN);
+		strncpy(argv[2], "uboot.bin",ARGV_LEN);//指针argv[2]在board_init_r中已被初始化
 	}
 	else if (type == 2) {
 		printf("\tInput Linux Kernel filename ");
@@ -749,9 +752,10 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	int my_tmp=0;
 	char cmd_buf[200]={0};
 	int i =0;
-	char *argv[4];	
-	//argv[2] = &file_name_space[0];
-	//memset(file_name_space,0,ARGV_LEN);
+	char *argv[4];//argv为指针数组:必须先对argv[2]指针初始化才能进行strcpy/memcpy等操作，或者直接将一字符串赋值给argv[2]="uboot.bin"
+//------>否则会出现data abort错误,pc : [<c3e03670>]          lr : [<c3e02fbc>]
+	argv[2] = &file_name_space[0];
+	memset(file_name_space,0,ARGV_LEN);
 	
 	/*config bootdelay via environment parameter: bootdelay */
 	{
