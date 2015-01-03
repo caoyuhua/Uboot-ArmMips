@@ -2195,8 +2195,13 @@ void board_init_r (gd_t *id, ulong dest_addr)
 
 		default:
 			printf("   \nSystem Boot Linux via Flash.\n");
-			do_bootm(cmdtp, 0, 1, argv);
-			break;            
+			do_bootm(cmdtp, 0, 1, argv);//没有使用bootcmd nand read c0008000 900000 300000 \n;bootm c0008000命令
+			break;          //直接使用bootm命令的实际执行函数do_bootm,此处代码也可写成如下：
+
+			//sprintf(addr_str, "0x%X", CFG_KERN_ADDR);
+			//argv[1] = &addr_str[0];
+			//printf("   \n3: System Boot system code via Flash.\n");
+			//do_bootm(cmdtp, 0, 2, argv); 
 		} /* end of switch */   
 
 		do_reset(cmdtp, 0, argc, argv);

@@ -197,6 +197,7 @@ void do_bootm_linux (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[],
 #endif
 #endif /* CONFIG_MEMSIZE_IN_BYTES */
 
+	//设置uboot环境变量的接口函数：linux_env_set
 	linux_env_set ("memsize", env_buf);
 
 	sprintf (env_buf, "0x%08X", (uint) UNCACHED_SDRAM (initrd_start));
@@ -220,7 +221,7 @@ void do_bootm_linux (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[],
 
 	/* we assume that the kernel is in place */
 	printf ("\nStarting kernel ...\n\n");
-
+//启动内核:
 	theKernel (linux_argc, linux_argv, linux_env, 0);
 }
 

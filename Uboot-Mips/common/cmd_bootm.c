@@ -167,7 +167,7 @@ static inline void mips_cache_set(u32 v)
 
 
 
-int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])//do_bootm函数
 {
 	ulong	addr;
 	ulong	data, len, checksum;
@@ -231,13 +231,13 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 #if defined (CFG_ENV_IS_IN_NAND)
 	if (addr >= CFG_FLASH_BASE)
-		ranand_read(&header, (char *)(addr - CFG_FLASH_BASE), sizeof(image_header_t));
+		ranand_read(&header, (char *)(addr - CFG_FLASH_BASE), sizeof(image_header_t));//ranand_read:从nandflash中读取uimage头.
 	else
 		memmove (&header, (char *)addr, sizeof(image_header_t));
 #elif defined (CFG_ENV_IS_IN_SPI)
 	if (addr >= CFG_FLASH_BASE)
 		raspi_read(&header, (char *)(addr - CFG_FLASH_BASE), sizeof(image_header_t));
-	else
+	else//raspi_read:从spi接口flash中读取uimage头.
 		memmove (&header, (char *)addr, sizeof(image_header_t));
 #else //CFG_ENV_IS_IN_FLASH
 	memmove (&header, (char *)addr, sizeof(image_header_t));
@@ -276,7 +276,7 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	SHOW_BOOT_PROGRESS (3);
 
 	/* for multi-file images we need the data part, too */
-	print_image_hdr ((image_header_t *)hdr);
+	print_image_hdr ((image_header_t *)hdr);//打印出uimage头信息.
 
 	data = addr + sizeof(image_header_t);
 	len  = ntohl(hdr->ih_size);
@@ -436,6 +436,7 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		 * use slower decompression algorithm which requires
 		 * at most 2300 KB of memory.
 		 */
+//bzip2格式压缩文件的解压缩函数:BZ2_bzBuffToBuffDecompress
 		i = BZ2_bzBuffToBuffDecompress ((char*)ntohl(hdr->ih_load),
 						&unc_len, (char *)data, len,
 						CFG_MALLOC_LEN < (4096 * 1024), 0);
@@ -455,9 +456,10 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
                 tBUncompress = get_ticks();
 #endif
 		unsigned int destLen = 0;
+//lzma格式压缩文件的解压缩函数:lzmaBuffToBuffDecompress
                 i = lzmaBuffToBuffDecompress ((char*)ntohl(hdr->ih_load),
                                 &destLen, (char *)data, len);
-                if (i != LZMA_RESULT_OK) {
+                if (i != LZMA_RESULT_OK) {//ralink_mips固件中的uimage就是用lzma工具压缩的。
                         printf ("LZMA ERROR %d - must RESET board to recover\n", i);
                         SHOW_BOOT_PROGRESS (-6);
                         udelay(100000);
@@ -544,7 +546,7 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 #ifdef CONFIG_SILENT_CONSOLE
 	    fixup_silent_linux();
 #endif
-	    do_bootm_linux  (cmdtp, flag, argc, argv,
+	    do_bootm_linux  (cmdtp, flag, argc, argv,//do_bootm_linux,defined in uboot/lib_mips/mips_linux.c
 			     addr, len_ptr, verify);
 	    break;
 
